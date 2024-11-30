@@ -1,105 +1,104 @@
 import json
-import collections
 import re
-import string
 
-with open('eval/re/unie_synthetic.json', 'r', encoding='utf-8') as file:
-    data_2 = json.load(file)
+def extract_triplets_from_preds(pred_file_path):
+    triplets = []
 
-with open('eval/re/relation_extraction_results_20241129_040256.json', 'r', encoding='utf-8') as file:
-    data_1 = json.load(file)
+    with open(pred_file_path, 'r', encoding='utf-8') as file:
+        preds = json.load(file)
 
-real_triples = []
+        for key, value in preds.items():
 
-for entry in data_2:
-    if 'tokenized_text' in entry and 'ner' in entry:
-        tokenized_text = entry['tokenized_text']
-        ner_entities = entry['ner']
+            match = re.match(r"^(.*?)\s*<>\s*(.*?)\s*<>\s*(.*)$", key)
+            if match:
+                head = match.group(1) 
+                relation = match.group(2) 
+                tail = match.group(3) 
+                for item in value:
+                    triplet = {
+                        'head': head,
+                        'relation': relation,
+                        'tail': tail
+                    }
+                    triplets.append(triplet)
 
-        entities = {}
-        
-        for start_idx, end_idx, label in ner_entities:
-            entity = ' '.join(tokenized_text[start_idx:end_idx+1])
-            entities[label] = entity
-        
-        if 'Person' in entities and 'Location' in entities:
-            real_triples.append((entities['Person'], entities['Location'], 'relation'))
-        if 'Person' in entities and 'Organization' in entities:
-            real_triples.append((entities['Person'], entities['Organization'], 'relation'))
-        if 'Person' in entities and 'Date' in entities:
-            real_triples.append((entities['Person'], entities['Date'], 'relation'))
-        if 'Person' in entities and 'Country' in entities:
-            real_triples.append((entities['Person'], entities['Country'], 'relation'))
-        if 'Person' in entities and 'City' in entities:
-            real_triples.append((entities['Person'], entities['City'], 'relation'))
+    return triplets
 
 
-predicted_triples = []
+def extract_triplets_from_real_data(file_path):
 
-for key, value in data_1.items():
-    for pred in value:
+    triplets = [] 
 
-        predicted_text = pred.get('text', '')
-        label = pred.get('label', '')
+    with open(file_path, 'r') as file:
+        for line in file:
+            try:
+                entry = json.loads(line.strip()) 
+                names = entry.get('names', [])
+                head = entry.get('head', {}).get('text', '')
+                tail = entry.get('tail', {}).get('text', '')
 
-        if "<entity1>" in label and "<entity2>" in label:
+                for name in names:
+                    triplet = {
+                        'head': head,
+                        'relation': name,
+                        'tail': tail
+                    }
+                    triplets.append(triplet)
 
-            entities = predicted_text.split()
-            if len(entities) >= 2:
-                entity1 = entities[0]
-                entity2 = entities[-1]
-                predicted_triples.append((entity1, entity2, 'relation'))
+            except json.JSONDecodeError:
 
-def normalize_answer(s):
-    if not isinstance(s, str):
-        s = str(s)
-    def remove_articles(text):
-        regex = re.compile(r'\b(a|an|the)\b', re.UNICODE)
-        return re.sub(regex, ' ', text)
-    def white_space_fix(text):
-        return ' '.join(text.split())
-    def remove_punc(text):
-        exclude = set(string.punctuation)
-        return ''.join(ch for ch in text if ch not in exclude)
-    def lower(text):
-        return text.lower()
-    return white_space_fix(remove_articles(remove_punc(lower(s))))
+                continue
 
-def get_tokens(s):
-    if not s: return []
-    return normalize_answer(s).split()
+    return triplets
 
-def compute_exact(a_gold, a_pred):
-    return int(normalize_answer(a_gold) == normalize_answer(a_pred))
 
-def compute_f1(a_gold, a_pred):
-    gold_toks = get_tokens(a_gold)
-    pred_toks = get_tokens(a_pred)
-    common = collections.Counter(gold_toks) & collections.Counter(pred_toks)
-    num_same = sum(common.values())
-    if len(gold_toks) == 0 or len(pred_toks) == 0:
-        return int(gold_toks == pred_toks)
-    if num_same == 0:
-        return 0
-    precision = 1.0 * num_same / len(pred_toks)
-    recall = 1.0 * num_same / len(gold_toks)
-    f1 = (2 * precision * recall) / (precision + recall)
-    return f1
+file_path = 're/val_wiki-2.json' 
+triplets = extract_triplets_from_real_data(file_path)
+predicts = extract_triplets_from_preds('re/relation_extraction_results_20241129_203053.json')
 
-def get_raw_scores(predictions, actuals):
-    exact_scores = []
-    f1_scores = []
-    for pred, actual in zip(predictions, actuals):
-        exact_scores.append(compute_exact(actual, pred))
-        f1_scores.append(compute_f1(actual, pred))
-    return exact_scores, f1_scores
 
-exact_scores, f1_scores = get_raw_scores(predicted_triples, real_triples)
-out_eval = {
-    'exact': 100.0 * sum(exact_scores) / len(exact_scores),
-    'f1': 100.0 * sum(f1_scores) / len(f1_scores),
-    'total': len(predicted_triples)
-}
+def compare_triplets(pred_triplets, real_triplets):
+    correct_count = 0
 
-print(f"Exact Match: {out_eval['exact']}%")
-print(f"F1 Score: {out_eval['f1']}%")
+    for pred in pred_triplets:
+
+        if any(pred['head'] == real['head'] and pred['tail'] == real['tail'] and pred['relation'] == real['relation'] for real in real_triplets):
+            correct_count += 1
+    
+    return correct_count
+
+
+
+correct_matches = compare_triplets(predicts, triplets)
+print(f"Correct matches: {correct_matches}")
+def calculate_metrics(pred_triplets, real_triplets):
+
+    true_positives = 0
+    for pred in pred_triplets:
+
+        if any(pred['head'] == real['head'] and pred['tail'] == real['tail'] and pred['relation'] == real['relation'] for real in real_triplets):
+            true_positives += 1
+
+    false_positives = len(pred_triplets) - true_positives
+
+    false_negatives = 0
+    for real in real_triplets:
+        if not any(real['head'] == pred['head'] and real['tail'] == pred['tail'] and real['relation'] == pred['relation'] for pred in pred_triplets):
+            false_negatives += 1
+
+    precision = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
+
+    recall = true_positives / (true_positives + false_negatives) if (true_positives + false_negatives) > 0 else 0
+
+    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+
+    exact_match = len(real_triplets) / len(pred_triplets) if len(pred_triplets) > 0 else 0
+
+    return precision, recall, f1_score, exact_match
+
+precision, recall, f1_score, exact_match = calculate_metrics(predicts, triplets)
+
+print(f"Precision: {precision:.4f}")
+print(f"Recall: {recall:.4f}")
+print(f"F1-score: {f1_score:.4f}")
+print(f"Exact match accuracy (Exact Score): {exact_match:.4f}")
