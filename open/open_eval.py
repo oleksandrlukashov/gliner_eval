@@ -3,7 +3,7 @@ from datasets import load_dataset
 
 dataset_sment_open = load_dataset("stanfordnlp/imdb")['test']
 
-with open('eval/open/open_extraction_results_20241129_045513.json', 'r', encoding='utf-8') as file:
+with open('open/open_extraction_results_20241129_045513.json', 'r', encoding='utf-8') as file:
     predicted_positive_parts = json.load(file)
 
 def evaluate_predictions(reviews, predictions):
