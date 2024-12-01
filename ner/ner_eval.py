@@ -72,11 +72,11 @@ def evaluate_metrics(dataset_dict, results_dict):
 
     return precision, recall, f1
 
-file_path_1 = 'eval/ner/ner_results_20241128_152646.json'
+file_path_1 = 'ner/ner_results_20241128_152646.json'
 with open(file_path_1, 'r') as f:
     data_1 = json.load(f)
 
-file_path_2 = 'eval/ner/unie_synthetic.json'
+file_path_2 = 'ner/unie_synthetic.json'
 with open(file_path_2, 'r') as f:
     data_2 = json.load(f)
 
