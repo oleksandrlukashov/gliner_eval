@@ -12,7 +12,7 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 
 dataset = load_dataset('cnn_dailymail', '3.0.0')['validation']
 
-with open('eval/summarize/summarize_results_20241129_003735.json', 'r') as f:
+with open('summarize/summarize_results_20241129_003735.json', 'r') as f:
     results = json.load(f)
 
 def compute_cosine_similarity(reference_summaries, predicted_summaries):
