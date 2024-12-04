@@ -4,6 +4,9 @@ from sentence_transformers import SentenceTransformer
 from nltk.tokenize import word_tokenize
 import numpy as np
 from rouge_score import rouge_scorer
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from parent_class import AbstractEvaluator
 from nltk.translate.bleu_score import sentence_bleu
 
