@@ -1,5 +1,7 @@
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from parent_class import AbstractEvaluator
 from datasets import load_dataset, Dataset
 from sklearn.metrics import f1_score
