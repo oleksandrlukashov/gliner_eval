@@ -2,6 +2,9 @@ import torch
 from datasets import load_dataset
 from gliner import GLiNER
 from abc import ABC, abstractmethod
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from classes.parent_class import AbstractEvaluator
 import json
 from tqdm import tqdm
