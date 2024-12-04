@@ -4,6 +4,9 @@ from gliner import GLiNER
 from collections import defaultdict
 from sklearn.metrics import precision_score, recall_score, f1_score
 from abc import ABC, abstractmethod
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from classes.parent_class import AbstractEvaluator
 import re
 from tqdm import tqdm
