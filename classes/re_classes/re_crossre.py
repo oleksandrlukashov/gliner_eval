@@ -1,6 +1,9 @@
+import sys
+import os
 from datasets import load_dataset
 from tqdm import tqdm
 from gliner import GLiNER
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from classes.parent_class import AbstractEvaluator
 import re
 
