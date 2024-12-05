@@ -62,11 +62,13 @@ class OpenIeGliNEREvaluator(AbstractEvaluator):
       return precision, recall, f1
 
     def process_predictions(self, predictions):
+      preds = []
       for sublist in predictions:
         for dicts in sublist:
           pred = dicts.get('text')
+          preds.append(pred)
       
-      return pred
+      return preds
 
 
 
