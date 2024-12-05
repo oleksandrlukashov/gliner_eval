@@ -5,7 +5,7 @@ import json
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from classes.parent_class import AbstractEvaluator
+from parent_class import AbstractEvaluator
 
 class DocredReGLiNEREvaluator(AbstractEvaluator):
 
@@ -104,10 +104,10 @@ class DocredReGLiNEREvaluator(AbstractEvaluator):
           preds = self.process_predictions(predictions)
           return self.compute_f_score(preds, true_labels)
 
-with open('train_annotated.json', 'r', buffering=1) as file:
+with open('classes/re_classes/train_annotated.json', 'r', buffering=1) as file:
     data = json.load(file)
 
-with open('rel_info.json', 'r') as file:
+with open('classes/re_classes/rel_info.json', 'r') as file:
     rel_info = json.load(file)
 
 max_examples = 1000

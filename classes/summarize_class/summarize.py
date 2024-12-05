@@ -1,18 +1,19 @@
 import torch
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from sentence_transformers import SentenceTransformer
 from nltk.tokenize import word_tokenize
 import numpy as np
+import json
 from rouge_score import rouge_scorer
+from nltk.translate.bleu_score import sentence_bleu
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from parent_class import AbstractEvaluator
-from nltk.translate.bleu_score import sentence_bleu
 
 class SumGLiNEREvaluator(AbstractEvaluator):
 
-  def prepare_dataset(self, dataset, *args, **kwargs):
+  def prepare_dataset(self, dataset: Dataset, *args, **kwargs):
       text = dataset['article']
       labels = ['summary']
       true_labels = dataset['highlights']
@@ -20,19 +21,20 @@ class SumGLiNEREvaluator(AbstractEvaluator):
   
   def prepare_text(self, text):
     input_texts = []
-    prompt = 'Summarize the given text, highlighting the most important information:\n'
+    prompt = 'Extract highlight sentence from given text:\n'
     for texts in text:
       if texts != '':
         input_texts.append(prompt + texts)
 
     return input_texts
       
-  def __call__(self, text, labels, threshold=0.5):
+  def __call__(self, text, labels, threshold: float=0.5):
 
 
     predictions = []
     for texts in text:
-      prediction = self.model.predict_entities(texts, list(labels), threshold=0.5)
+
+      prediction = self.model.predict_entities(texts, labels, threshold=0.5)
       predictions.append(prediction)
 
     return predictions
@@ -79,11 +81,21 @@ class SumGLiNEREvaluator(AbstractEvaluator):
   def evaluate(self, dataset_id, config_name, labels=None, *args, **kwargs):
 
     dataset = load_dataset(dataset_id, config_name)['validation']
+    dataset = dataset[:50]
     text, true_labels, labels = self.prepare_dataset(dataset)
     input_text = self.prepare_text(text)
     predictions = self.__call__(input_text, labels, threshold=0.5)
     preds = self.process_predictions(predictions)
     return self.compute_f_score(preds, true_labels)
-  
-sumr = SumGLiNEREvaluator(model_id='knowledgator/gliner-multitask-large-v0.5')
-sumr.evaluate('cnn_dailymail', '3.0.0')
+
+evaluator = SumGLiNEREvaluator('knowledgator/gliner-multitask-v1.0')
+results = evaluator.evaluate('cnn_dailymail', '3.0.0')
+output_file = 'evaluation_results_sum_1.json'
+with open(output_file, 'w', encoding='utf-8') as f:
+    json.dump(results, f, ensure_ascii=False, indent=4)
+
+evaluator = SumGLiNEREvaluator('knowledgator/gliner-multitask-large-v0.5')
+results = evaluator.evaluate('cnn_dailymail', '3.0.0')
+output_file = 'evaluation_results_sum_05.json'
+with open(output_file, 'w', encoding='utf-8') as f:
+    json.dump(results, f, ensure_ascii=False, indent=4)

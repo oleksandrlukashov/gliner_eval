@@ -7,7 +7,8 @@ from abc import ABC, abstractmethod
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from classes.parent_class import AbstractEvaluator
+from parent_class import AbstractEvaluator
+import json
 import re
 from tqdm import tqdm
 
@@ -92,7 +93,20 @@ class ImbdGliNEREvaluator(AbstractEvaluator):
     def evaluate(self, dataset_id, labels=None, *args, **kwargs):
 
       dataset = load_dataset(dataset_id)['test']
+      dataset = dataset[:100]
       test_texts, true_labels, labels = self.prepare_dataset(dataset)
       predictions = self.__call__(test_texts, labels, threshold=0.5)
       preds = self.process_predictions(predictions)
       return self.compute_f_score(preds, true_labels)
+
+evaluator = ImbdGliNEREvaluator('knowledgator/gliner-multitask-v1.0')
+results = evaluator.evaluate('stanfordnlp/imdb')
+output_file = 'evaluation_results_sentiment_1.json'
+with open(output_file, 'w', encoding='utf-8') as f:
+    json.dump(results, f, ensure_ascii=False, indent=4)
+
+evaluator = ImbdGliNEREvaluator('knowledgator/gliner-multitask-large-v0.5')
+results = evaluator.evaluate('stanfordnlp/imdb')
+output_file = 'evaluation_results_sentiment_05.json'
+with open(output_file, 'w', encoding='utf-8') as f:
+    json.dump(results, f, ensure_ascii=False, indent=4)

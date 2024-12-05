@@ -1,10 +1,10 @@
-import sys
-import os
 from datasets import load_dataset
 from tqdm import tqdm
 from gliner import GLiNER
+import sys
+import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from classes.parent_class import AbstractEvaluator
+from parent_class import AbstractEvaluator
 import re
 
 class CrossReGLiNEREvaluator(AbstractEvaluator):
