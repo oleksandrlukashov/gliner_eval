@@ -110,8 +110,5 @@ with open('classes/re_classes/train_annotated.json', 'r', buffering=1) as file:
 with open('classes/re_classes/rel_info.json', 'r') as file:
     rel_info = json.load(file)
 
-max_examples = 1000
-data = data[:max_examples]
-
 rel = DocredReGLiNEREvaluator(model_id = 'knowledgator/gliner-multitask-large-v0.5')
 rel.evaluate(data, rel_info)
