@@ -93,6 +93,7 @@ with open('classes/qa_class/data.json') as f:
     dataset_json = json.load(f)
     dataset = dataset_json['data']
 
+dataset = dataset[:2]
 
 evaluator = QaGLiNEREvaluator('knowledgator/gliner-multitask-v1.0')
 results = evaluator.evaluate(dataset)

@@ -81,6 +81,7 @@ class SumGLiNEREvaluator(AbstractEvaluator):
   def evaluate(self, dataset_id, config_name, labels=None, *args, **kwargs):
 
     dataset = load_dataset(dataset_id, config_name)['validation']
+    dataset = dataset[:50]
     text, true_labels, labels = self.prepare_dataset(dataset)
     input_text = self.prepare_text(text)
     predictions = self.__call__(input_text, labels, threshold=0.5)

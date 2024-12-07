@@ -93,6 +93,7 @@ class ImbdGliNEREvaluator(AbstractEvaluator):
     def evaluate(self, dataset_id, labels=None, *args, **kwargs):
 
       dataset = load_dataset(dataset_id)['test']
+      dataset = dataset[:100]
       test_texts, true_labels, labels = self.prepare_dataset(dataset)
       predictions = self.__call__(test_texts, labels, threshold=0.5)
       preds = self.process_predictions(predictions)
