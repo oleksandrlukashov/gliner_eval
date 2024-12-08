@@ -3,35 +3,27 @@ import os
 import pandas as pd
 
 files = [
-    'classes/qa_class/qa_llama.json',
-    'classes/qa_class/qa_05.json',
-    'classes/qa_class/qa_1.json'
+    'classes/qa_class/GLiNER Llama Multitask.json',
+    'classes/qa_class/GLiNER Multitask v0.5.json',
+    'classes/qa_class/GLiNER Multitask v1.0.json'
 ]
 
 metrics_data = []
 
 for filename in files:
-    try:
-        with open(filename, 'r') as file:
-            data = json.load(file)
+    with open(filename, 'r') as file:
+        data = json.load(file)
 
-        precision = data.get('precision', None)
-        recall = data.get('recall', None)
-        f1_score = data.get('f1_score', None)
+    precision = data['precision']
+    recall = data['recall']
+    f1_score = data['f1_score']
 
-        if precision is not None and recall is not None and f1_score is not None:
-
-            metrics_data.append({
-                'File': os.path.basename(filename),
-                'Precision': precision,
-                'Recall': recall,
-                'F1 Score': f1_score
-            })
-        else:
-            print(f"Пропущены метрики в файле {filename}")
-
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"Ошибка при обработке файла {filename}: {e}")
+    metrics_data.append({
+        'Model': os.path.splitext(os.path.basename(filename))[0],
+        'Precision': precision,
+        'Recall': recall,
+        'F1 Score': f1_score
+    })
 
 df = pd.DataFrame(metrics_data)
 
@@ -41,4 +33,3 @@ output_path = 'classes/qa_class/qa.md'
 with open(output_path, 'w') as f:
     f.write(markdown_table)
 
-print(f"Markdown таблица сохранена в {output_path}")

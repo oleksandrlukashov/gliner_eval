@@ -3,9 +3,9 @@ import json
 import os
 
 files = [
-    'classes/summarize_class/sum_llama.json',
-    'classes/summarize_class/sum_05.json',
-    'classes/summarize_class/sum_1.json'
+    'classes/summarize_class/GLiNER Llama Multitask.json',
+    'classes/summarize_class/GLiNER Multitask v0.5.json',
+    'classes/summarize_class/GLiNER Multitask v1.0.json'
 ]
 
 metrics_data = {
@@ -32,7 +32,7 @@ for filename in files:
     metrics_data['ROUGEL'].append(rougel)
     metrics_data['Cosine Similarity'].append(cosine_similarity)
 
-file_names = [os.path.basename(file) for file in files]
+file_names = [os.path.splitext(os.path.basename(file))[0] for file in files]
 
 x = range(len(file_names))
 
@@ -44,6 +44,7 @@ plt.bar([i + 2 * width for i in x], metrics_data['ROUGE2'], width=width, label='
 plt.bar([i + 3 * width for i in x], metrics_data['ROUGEL'], width=width, label='ROUGEL', align='center')
 plt.bar([i + 4 * width for i in x], metrics_data['Cosine Similarity'], width=width, label='Cosine Similarity', align='center')
 
+plt.title('Performance of GLiNER models on Summarization task')
 plt.ylabel('Values')
 
 plt.xticks([i + 2 * width for i in x], file_names, rotation=45)

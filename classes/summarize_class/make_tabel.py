@@ -3,9 +3,9 @@ import pandas as pd
 import os
 
 files = [
-    'classes/summarize_class/sum_llama.json',
-    'classes/summarize_class/sum_05.json',
-    'classes/summarize_class/sum_1.json'
+    'classes/summarize_class/GLiNER Llama Multitask.json',
+    'classes/summarize_class/GLiNER Multitask v0.5.json',
+    'classes/summarize_class/GLiNER Multitask v1.0.json'
 ]
 metrics_data = []
 for filename in files:
@@ -19,7 +19,7 @@ for filename in files:
         cosine_similarity = data[2]
 
         metrics_data.append({
-            'File': os.path.basename(filename),
+            'Model': os.path.splitext(os.path.basename(filename))[0],
             'BLEU': bleu,
             'ROUGE1': rouge1,
             'ROUGE2': rouge2,
@@ -28,10 +28,11 @@ for filename in files:
         })
 
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"Ошибка при обработке файла {filename}: {e}")
+        print(f"Error with {filename}: {e}")
 df = pd.DataFrame(metrics_data)
 markdown_table = df.to_markdown(index=False)
 output_path = 'classes/summarize_class/sum.md'
 with open(output_path, 'w') as f:
     f.write(markdown_table)
 
+print(f"Markdown table saved to {output_path}")
