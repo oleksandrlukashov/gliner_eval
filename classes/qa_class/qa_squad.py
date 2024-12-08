@@ -4,15 +4,16 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from parent_class import AbstractEvaluator
+from tqdm import tqdm
 
 class QaGLiNEREvaluator(AbstractEvaluator):
 
     def evaluate(self, dataset, labels=None, *args, **kwargs):
 
-        context, questions, ans = self.prepare_dataset(dataset)
+        context, questions, ans, impossibles = self.prepare_dataset(dataset)
         predictions = self.__call__(context, questions)
         preds = self.process_predictions(predictions)
-        return self.compute_f_score(preds, ans)
+        return self.compute_f_score(preds, ans, impossibles)
 
     def prepare_dataset(self, dataset, *args, **kwargs):
 
@@ -22,6 +23,7 @@ class QaGLiNEREvaluator(AbstractEvaluator):
         questions = []
         answers__ = []
         answers = []
+        impossibles = []
         for dicts in dataset:
           paragraphs = dicts.get('paragraphs')
           for p in paragraphs:
@@ -31,19 +33,21 @@ class QaGLiNEREvaluator(AbstractEvaluator):
             question = [d['question'] for d in qas if 'question' in d]
             answers_ = [k['answers'] for k in qas if 'answers' in k]
             ans = [list({d['text'] for d in sublist}) for sublist in answers_]
+            is_impossible = [m['is_impossible'] for m in qas if 'is_impossible' in m]
+            impossibles.append(is_impossible)
             answers.append(ans)
             questions.append(question)
 
-        return contexts, questions, answers
-        
+        return contexts, questions, answers, impossibles
+
     def __call__(self, contexts, questions, threshold=0.5):
 
         grouped_preds = []
         labels = ['answer']
-        for context, question in zip(contexts, questions):
+        for context, question in tqdm(zip(contexts, questions), total=len(contexts), desc="Processing contexts"):
             predictions = []
             for q in question:
-              input_text = q + context
+              input_text = q + "\n" + context
               prediction = self.model.predict_entities(input_text, labels, threshold=0.5)
               predictions.append(prediction)
 
@@ -51,36 +55,40 @@ class QaGLiNEREvaluator(AbstractEvaluator):
 
         return grouped_preds
 
-    def compute_f_score(self, predicts, true_labels):
+    def compute_f_score(self, predicts, true_labels, pos):
+        true_positive = 0
+        false_positive = 0
+        false_negative = 0
 
-      true_positive = 0
-      false_positive = 0
-      false_negative = 0
+        for predict, ans, posibl in zip(predicts, true_labels, pos):
+            for pred, ans_, pos_ in zip(predict, ans, posibl):
+                if pos_ == False:
+                    if pred:
+                        matched = any(p == a for p in pred for a in ans_)
+                        if matched:
+                            true_positive += 1
+                        else:
+                            false_positive += 1
+                    else:  # Если предсказание пустое, а ответ возможен
+                        false_negative += 1
+                elif pos_ == True:
+                    if pred == []:
+                        true_positive += 1
+                    else:
+                        false_positive += 1
 
-      for predict, ans in zip(predicts, true_labels):
-          for pred, ans_ in zip(predict, ans):
-              pred_set, ans_set = set(pred), set(ans_)
-              tp = len(pred_set & ans_set)
-              true_positive += tp
-              fp = len(pred_set - ans_set)
-              false_positive += fp
-              fn = len(ans_set - pred_set)
-              false_negative += fn
 
-      precision = true_positive / (true_positive + false_positive) if (true_positive + false_positive) > 0 else 0.0
-      recall = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0.0
-      f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+        precision = true_positive / (true_positive + false_positive) if (true_positive + false_positive) > 0 else 0.0
+        recall = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0.0
+        f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
-      return {
-          "true_positive": true_positive,
-          "false_positive": false_positive,
-          "false_negative": false_negative,
-          "precision": precision,
-          "recall": recall,
-          "f1_score": f1_score,
-      }
+        return {
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1_score,
+        }
 
-            
+
 
     def process_predictions(self, predictions):
 
@@ -89,20 +97,6 @@ class QaGLiNEREvaluator(AbstractEvaluator):
 
         return result
 
-with open('classes/qa_class/data.json') as f:
+with open('data.json') as f:
     dataset_json = json.load(f)
     dataset = dataset_json['data']
-
-dataset = dataset[:2]
-
-evaluator = QaGLiNEREvaluator('knowledgator/gliner-multitask-v1.0')
-results = evaluator.evaluate(dataset)
-output_file = 'evaluation_results_qa_1.json'
-with open(output_file, 'w', encoding='utf-8') as f:
-    json.dump(results, f, ensure_ascii=False, indent=4)
-
-evaluator = QaGLiNEREvaluator('knowledgator/gliner-multitask-large-v0.5')
-results = evaluator.evaluate(dataset)
-output_file = 'evaluation_results_qa_05.json'
-with open(output_file, 'w', encoding='utf-8') as f:
-    json.dump(results, f, ensure_ascii=False, indent=4)

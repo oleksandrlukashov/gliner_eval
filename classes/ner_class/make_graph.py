@@ -22,7 +22,6 @@ for filename in files:
     metrics_data['Recall'].append(data[1])
     metrics_data['F1'].append(data[2])
 
-# Убираем расширение .json из имен файлов
 file_names = [os.path.splitext(os.path.basename(file))[0] for file in files]
 
 x = range(len(file_names))
