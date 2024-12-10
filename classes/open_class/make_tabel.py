@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 files = [
-    'classes/open_class/GLiNER Llama Multitask.json',
+    'classes/open_class/GLiNER Multitask Llama.json',
     'classes/open_class/GLiNER Multitask v0.5.json',
     'classes/open_class/GLiNER Multitask v1.0.json'
 ]
